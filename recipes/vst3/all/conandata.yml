@@ -1,0 +1,4 @@
+sources:
+  "3.6.12":
+    tag: "vstsdk3612_03_12_2018_build_67"
+    url: "https://github.com/steinbergmedia/vst3sdk.git"
