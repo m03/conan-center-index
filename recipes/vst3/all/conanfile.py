@@ -1,9 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
+
 from conans import CMake, ConanFile, tools
 
 
 class ConanVst3(ConanFile):
     name = 'vst3'
+    version = '3.6.12'
     description = 'Steinberg VST Plug-in interface'
     homepage = 'https://www.steinberg.net/en/company/developers.html'
     url = 'https://github.com/steinbergmedia/vst3sdk'
@@ -22,8 +27,8 @@ class ConanVst3(ConanFile):
         'shared': False,
     }
 
-    _source_subfolder = 'source_subfolder'
-    _build_subfolder = 'build_subfolder'
+    _build_subfolder = 'build'
+    _source_subfolder = 'source'
 
 
     def config_options(self):
@@ -41,8 +46,10 @@ class ConanVst3(ConanFile):
     def source(self):
         """ Get the remote sources and store them in the local source directory """
         repo = self.conan_data['sources'][self.version]
-        git = tools.Git(folder=_source_subfolder)
-        git.clone(url=repo['url'], branch=repo['tag'], args='--recursive', shallow=True)
+
+        # https://docs.conan.io/en/latest/reference/tools.html#tools-git
+        git = tools.Git(folder=self._source_subfolder)
+        git.clone(url=repo['url'], branch=repo['tag'], args='--recursive --single-branch', shallow=False)
 
 
     def _configure_cmake(self):
@@ -65,6 +72,7 @@ class ConanVst3(ConanFile):
 
         self.copy(pattern='COPYING', src=self._source_subfolder, dst='licenses', keep_path=False)
 
+        # Clean up the directories created by the ??????
         tools.rmdir(os.path.join(self.package_folder, 'lib', 'cmake'))
         tools.rmdir(os.path.join(self.package_folder, 'lib', 'pkgconfig'))
         tools.rmdir(os.path.join(self.package_folder, 'share'))
