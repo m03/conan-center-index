@@ -43,8 +43,22 @@ class ConanVst3(ConanFile):
         del self.settings.compiler.libcxx
 
 
+    @property
+    def _latest_version(self):
+        """ Get the latest version from the conan data config """
+        latest = self.version
+
+        for current in self.conan_data['sources']:
+            if tools.Version(current) > tools.Version(latest):
+                latest = current
+
+        return latest
+
+
     def source(self):
-        """ Get the remote sources and store them in the local source directory """
+        """
+        Get the remote sources and store them in the local source directory.
+        """
         repo = self.conan_data['sources'][self.version]
 
         # https://docs.conan.io/en/latest/reference/tools.html#tools-git
@@ -55,18 +69,21 @@ class ConanVst3(ConanFile):
     def _configure_cmake(self):
         """ Set the cmake configuration """
         cmake = CMake(self)
-        cmake.configure(build_folder=self._build_subfolder)
+        cmake.configure(source_folder=self._source_subfolder, build_folder=self._build_subfolder)
+
+        if self.settings.os == 'Macos':
+            cmake.generator = 'Xcode'
         return cmake
 
 
     def build(self):
-        """  """
+        """ Run the cmake build """
         cmake = self._configure_cmake()
         cmake.build()
 
 
     def package(self):
-        """  """
+        """ Run the cmake install and cleanup the package directories """
         cmake = self._configure_cmake()
         cmake.install()
 
