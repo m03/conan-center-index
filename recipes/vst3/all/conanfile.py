@@ -16,7 +16,7 @@ class ConanVst3(ConanFile):
     topics = ('audio', 'plugin', 'vst', 'vst3')
 
     exports_sources = ['CMakeLists.txt']
-    generators = 'cmake'
+    generators = 'cmake', 'xcode'
     settings = ('arch', 'build_type', 'compiler', 'os')
     options = {
         'fPIC': [True, False],
@@ -27,8 +27,8 @@ class ConanVst3(ConanFile):
         'shared': False,
     }
 
-    _build_subfolder = 'build'
-    _source_subfolder = 'source'
+    _build_folder = 'build'
+    _source_folder = 'source'
 
 
     def config_options(self):
@@ -62,17 +62,21 @@ class ConanVst3(ConanFile):
         repo = self.conan_data['sources'][self.version]
 
         # https://docs.conan.io/en/latest/reference/tools.html#tools-git
-        git = tools.Git(folder=self._source_subfolder)
+        git = tools.Git(folder=self._source_folder)
         git.clone(url=repo['url'], branch=repo['tag'], args='--recursive --single-branch', shallow=False)
 
 
     def _configure_cmake(self):
         """ Set the cmake configuration """
-        cmake = CMake(self)
-        cmake.configure(source_folder=self._source_subfolder, build_folder=self._build_subfolder)
+        cmake_params = dict()
 
         if self.settings.os == 'Macos':
-            cmake.generator = 'Xcode'
+            cmake_params['generator'] = 'Xcode'
+
+        cmake = CMake(self, **cmake_params)
+        cmake.definitions['SMTG_ADD_VST3_PLUGINS_SAMPLES'] = False
+        cmake.configure(source_folder=self._source_folder, build_folder=self._build_folder)
+
         return cmake
 
 
@@ -84,15 +88,9 @@ class ConanVst3(ConanFile):
 
     def package(self):
         """ Run the cmake install and cleanup the package directories """
-        cmake = self._configure_cmake()
-        cmake.install()
-
-        self.copy(pattern='COPYING', src=self._source_subfolder, dst='licenses', keep_path=False)
-
-        # Clean up the directories created by the ??????
-        tools.rmdir(os.path.join(self.package_folder, 'lib', 'cmake'))
-        tools.rmdir(os.path.join(self.package_folder, 'lib', 'pkgconfig'))
-        tools.rmdir(os.path.join(self.package_folder, 'share'))
+        ### WIP ###
+        self.copy(pattern='LICENSE', dst='licenses', src=self._source_folder, ignore_case=True, keep_path=False)
+#        tools.rmdir(os.path.join(self.package_folder, 'lib', 'pkgconfig'))
 
 
     def package_info(self):
