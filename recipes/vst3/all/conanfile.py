@@ -72,6 +72,7 @@ class ConanVst3(ConanFile):
 
         if self.settings.os == 'Macos':
             cmake_params['generator'] = 'Xcode'
+            self.output.info('Using generator: %s', cmake_params['generator'])
 
         cmake = CMake(self, **cmake_params)
         cmake.definitions['SMTG_ADD_VST3_PLUGINS_SAMPLES'] = False
@@ -84,15 +85,22 @@ class ConanVst3(ConanFile):
         """ Run the cmake build """
         cmake = self._configure_cmake()
         cmake.build()
+        # cmake.test()
 
 
     def package(self):
-        """ Run the cmake install and cleanup the package directories """
+        """ Create the package and perform any cleanup steps """
         ### WIP ###
         self.copy(pattern='LICENSE', dst='licenses', src=self._source_folder, ignore_case=True, keep_path=False)
 #        tools.rmdir(os.path.join(self.package_folder, 'lib', 'pkgconfig'))
 
 
+    def package_id(self):
+        """ Define the settings that cause a new package ID to be generated """
+        del self.info.settings.compiler
+
+
     def package_info(self):
-        """  """
+        """ Define the build information that is provided to consumers """
         self.cpp_info.libs = tools.collect_libs(self)
+        self.output.info('Package libraries: %s', ', '.join(self.cpp_info.libs))
