@@ -72,17 +72,20 @@ class ConanVst3(ConanFile):
 
         if self.settings.os == 'Macos':
             cmake_params['generator'] = 'Xcode'
-            self.output.info('Using generator: %s', cmake_params['generator'])
+            self.output.info('Using generator: %s' % cmake_params['generator'])
 
         cmake = CMake(self, **cmake_params)
+
+        # Disable building the sample projects.
         cmake.definitions['SMTG_ADD_VST3_PLUGINS_SAMPLES'] = False
+
         cmake.configure(source_folder=self._source_folder, build_folder=self._build_folder)
 
         return cmake
 
 
     def build(self):
-        """ Run the cmake build """
+        """ Configure and run the cmake build and tests """
         cmake = self._configure_cmake()
         cmake.build()
         # cmake.test()
@@ -90,9 +93,12 @@ class ConanVst3(ConanFile):
 
     def package(self):
         """ Create the package and perform any cleanup steps """
-        ### WIP ###
-        self.copy(pattern='LICENSE', dst='licenses', src=self._source_folder, ignore_case=True, keep_path=False)
-#        tools.rmdir(os.path.join(self.package_folder, 'lib', 'pkgconfig'))
+        library_path = os.path.join(self._build_folder, 'lib', str(self.settings.build_type))
+        self.output.info('Using source library path: %s' % library_path)
+
+        self.copy(pattern='LICENSE*', dst='licenses', src=self._source_folder, ignore_case=True, keep_path=False)
+        self.copy(pattern='*.a', dst='lib', src=library_path, keep_path=False)
+        self.copy(pattern='*.h', dst='include', src=self._source_folder, keep_path=True)
 
 
     def package_id(self):
@@ -103,4 +109,4 @@ class ConanVst3(ConanFile):
     def package_info(self):
         """ Define the build information that is provided to consumers """
         self.cpp_info.libs = tools.collect_libs(self)
-        self.output.info('Package libraries: %s', ', '.join(self.cpp_info.libs))
+        self.output.info('Package libraries: %s' % ', '.join(self.cpp_info.libs))
