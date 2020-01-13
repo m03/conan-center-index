@@ -110,3 +110,6 @@ class ConanVst3(ConanFile):
         """ Define the build information that is provided to consumers """
         self.cpp_info.libs = tools.collect_libs(self)
         self.output.info('Package libraries: %s' % ', '.join(self.cpp_info.libs))
+
+        if self.settings.os == 'Macos':
+            self.cpp_info.frameworks.extend(['CoreFoundation'])
