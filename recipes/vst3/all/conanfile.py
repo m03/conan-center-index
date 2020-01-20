@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+#import shutil
 
 from conans import CMake, ConanFile, tools
 
 
 class ConanVst3(ConanFile):
     name = 'vst3'
-    version = '3.6.12'
+    version = '3.6.14'
     description = 'Steinberg VST Plug-in interface'
     homepage = 'https://www.steinberg.net/en/company/developers.html'
     url = 'https://github.com/steinbergmedia/vst3sdk'
@@ -78,6 +79,8 @@ class ConanVst3(ConanFile):
 
         # Disable building the sample projects.
         cmake.definitions['SMTG_ADD_VST3_PLUGINS_SAMPLES'] = False
+        # Ensure the vstgui is included.
+        cmake.definitions['SMTG_ADD_VSTGUI'] = True
 
         cmake.configure(source_folder=self._source_folder, build_folder=self._build_folder)
 
@@ -93,12 +96,26 @@ class ConanVst3(ConanFile):
 
     def package(self):
         """ Create the package and perform any cleanup steps """
+        cmake_module_path = os.path.join(self._source_folder, 'cmake')
+        self.output.info('Using cmake module path: %s' % cmake_module_path)
+
         library_path = os.path.join(self._build_folder, 'lib', str(self.settings.build_type))
         self.output.info('Using source library path: %s' % library_path)
 
         self.copy(pattern='LICENSE*', dst='licenses', src=self._source_folder, ignore_case=True, keep_path=False)
         self.copy(pattern='*.a', dst='lib', src=library_path, keep_path=False)
         self.copy(pattern='*.h', dst='include', src=self._source_folder, keep_path=True)
+        self.copy(pattern='*.cmake', dst='cmake', src=cmake_module_path, keep_path=False)
+
+        # # The vstgui4 submodule is not consistent with the other submodules and must be moved
+        # # to where the other submodules expect it to be located.
+        # vstgui_root = os.path.join(self.package_folder, 'include', 'vstgui4')
+        # vstgui_source = os.path.join(vstgui_root, 'vstgui')
+        # vstgui_destination = os.path.join(self.package_folder, 'include', 'vstgui')
+
+        # if os.path.isdir(vstgui_source) and not os.path.isdir(vstgui_destination):
+        #     shutil.move(vstgui_source, vstgui_destination)
+        #     tools.rmdir(vstgui_root)
 
 
     def package_id(self):
@@ -113,3 +130,6 @@ class ConanVst3(ConanFile):
 
         if self.settings.os == 'Macos':
             self.cpp_info.frameworks.extend(['CoreFoundation'])
+
+        # https://github.com/conan-io/conan/issues/1827
+        # self.user_info.SPEC = os.path.join(self.package_folder, "src", "spec", "vk.xml")
